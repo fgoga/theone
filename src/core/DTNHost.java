@@ -4,12 +4,11 @@
  */
 package core;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import movement.MovementModel;
 import movement.Path;
+import routing.ContactProperties;
 import routing.MessageRouter;
 import routing.util.RoutingInfo;
 
@@ -36,6 +35,9 @@ public class DTNHost implements Comparable<DTNHost> {
 	private List<MovementListener> movListeners;
 	private List<NetworkInterface> net;
 	private ModuleCommunicationBus comBus;
+
+	private Map<String, ContactProperties> contactPropertiesMap;
+	//private Map<String, StorageAndEnergyProperties> storageAndEnergyPropertiesMap;
 
 	static {
 		DTNSim.registerForReset(DTNHost.class.getCanonicalName());
@@ -569,6 +571,17 @@ public class DTNHost implements Comparable<DTNHost> {
 	 */
 	public int compareTo(DTNHost h) {
 		return this.getAddress() - h.getAddress();
+	}
+
+	public Map<String, ContactProperties> getContactPropertiesMap() {
+		if (contactPropertiesMap == null){
+			contactPropertiesMap = new HashMap<String, ContactProperties>();
+		}
+		return contactPropertiesMap;
+	}
+
+	public void setContactPropertiesMap(Map<String, ContactProperties> contactPropertiesMap) {
+		this.contactPropertiesMap = contactPropertiesMap;
 	}
 
 }
