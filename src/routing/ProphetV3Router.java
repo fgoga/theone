@@ -233,6 +233,14 @@ public class ProphetV3Router extends ActiveRouter {
                     contactID, contactProperties.toString())));
         }
 
+        for (Map.Entry<String, StorageAndEnergyProperties> se : getHost().getStorageAndEnergyPropertiesMap().entrySet()) {
+            String nodeID = se.getKey();
+            StorageAndEnergyProperties storageAndEnergyProperties = se.getValue();
+
+            ri.addMoreInfo(new RoutingInfo(String.format("%s : %s",
+                    nodeID, storageAndEnergyProperties.toString())));
+        }
+
         top.addMoreInfo(ri);
         return top;
     }

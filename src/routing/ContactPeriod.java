@@ -23,4 +23,13 @@ public class ContactPeriod {
     public void setEndTime(double endTime) {
         this.endTime = endTime;
     }
+
+
+    @Override
+    public String toString() {
+        return "ContactPeriod{" +
+                "startTime=" + getStartTime() +
+                ", endTime=" + getEndTime() +
+                '}';
+    }
 }

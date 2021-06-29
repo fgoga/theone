@@ -71,7 +71,7 @@ public class ContactProperties {
         return "ContactProperties{" +
                 "counter=" + getCounter() +
                 ", totalContactTime=" + getTotalContactTime() +
-                ", contactTimeHistory=" + contactTimeHistory +
+                ", contactTimeHistory=" + getContactTimeHistory() +
                 '}';
     }
 

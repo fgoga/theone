@@ -55,7 +55,7 @@ highspeedInterface.transmitRange = 200
 #Group.router = [EpidemicRouter;ProphetV2Router;MaxPropRouter;SprayAndWaitRouter]
 Group.router = ProphetV3Router
 Group.bufferSize = 1000G
-Group.waitTime = 30
+Group.waitTime = 10,15
 # All nodes have the bluetooth interface
 Group.nrofInterfaces = 1
 Group.interface1 = btInterface
@@ -76,7 +76,7 @@ Events1.class = MessageEventGenerator
 # Creation interval in seconds (one new message every 25 to 35 seconds)
 Events1.interval = 3
 # Message sizes (500kB - 100MB)
-Events1.size = 1MB
+Events1.size = 1M
 # range of message source/destination addresses
 Events1.hosts = 0,126
 # Message ID prefix

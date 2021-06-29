@@ -24,4 +24,10 @@ public class NodeProperties {
 //        this.availableBattery = availableBattery;
 //    }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "freeBufferSize=" + getFreeBufferSize() +
+                '}';
+    }
 }

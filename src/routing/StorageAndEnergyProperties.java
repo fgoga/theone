@@ -39,4 +39,12 @@ public class StorageAndEnergyProperties {
         NodeProperties nodeProperties = new NodeProperties(freeBufferSize);
         nodePropertiesMap.put(lastContactTime, nodeProperties);
     }
+
+    @Override
+    public String toString() {
+        return "StorageAndEnergyProperties{" +
+                "bufferSize=" + getBufferSize() +
+                ", nodeProperties=" + getNodePropertiesMap() +
+                '}';
+    }
 }
