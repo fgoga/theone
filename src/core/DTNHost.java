@@ -10,6 +10,7 @@ import movement.MovementModel;
 import movement.Path;
 import routing.ContactProperties;
 import routing.MessageRouter;
+import routing.StorageAndEnergyProperties;
 import routing.util.RoutingInfo;
 
 import static core.Constants.DEBUG;
@@ -37,7 +38,7 @@ public class DTNHost implements Comparable<DTNHost> {
 	private ModuleCommunicationBus comBus;
 
 	private Map<String, ContactProperties> contactPropertiesMap;
-	//private Map<String, StorageAndEnergyProperties> storageAndEnergyPropertiesMap;
+	private Map<String, StorageAndEnergyProperties> storageAndEnergyPropertiesMap;
 
 	static {
 		DTNSim.registerForReset(DTNHost.class.getCanonicalName());
@@ -584,4 +585,14 @@ public class DTNHost implements Comparable<DTNHost> {
 		this.contactPropertiesMap = contactPropertiesMap;
 	}
 
+	public Map<String, StorageAndEnergyProperties> getStorageAndEnergyPropertiesMap() {
+		if (storageAndEnergyPropertiesMap == null){
+			storageAndEnergyPropertiesMap = new HashMap<String, StorageAndEnergyProperties>();
+		}
+		return storageAndEnergyPropertiesMap;
+	}
+
+	public void setStorageAndEnergyPropertiesMap(Map<String, StorageAndEnergyProperties> storageAndEnergyPropertiesMap) {
+		this.storageAndEnergyPropertiesMap = storageAndEnergyPropertiesMap;
+	}
 }

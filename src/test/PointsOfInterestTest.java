@@ -107,7 +107,7 @@ public class PointsOfInterestTest extends TestCase {
 
 		Random rng = new Random(rngSeed);
 
-		pois = new PointsOfInterest(map, okNodes, s, rng);
+//		pois = new PointsOfInterest(map, okNodes, s, rng);
 	}
 
 	private String fixFile(String fileName) {

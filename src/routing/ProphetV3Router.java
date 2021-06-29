@@ -75,19 +75,8 @@ public class ProphetV3Router extends ActiveRouter {
     private double gamma;
 
     /**
-     * delivery predictabilities
-     */
-    private Map<DTNHost, Double> preds;
-
-    /**
      * last encouter timestamp (sim)time
      */
-    private Map<DTNHost, Double> lastEncouterTime;
-
-    /**
-     * last delivery predictability update (sim)time
-     */
-    private double lastAgeUpdate;
 
     /**
      * Constructor. Creates a new message router based on the settings in
@@ -110,8 +99,6 @@ public class ProphetV3Router extends ActiveRouter {
             gamma = DEFAULT_GAMMA;
         }
 
-        initPreds();
-        initEncTimes();
 
     }
 
@@ -125,128 +112,64 @@ public class ProphetV3Router extends ActiveRouter {
         this.secondsInTimeUnit = r.secondsInTimeUnit;
         this.beta = r.beta;
         this.gamma = r.gamma;
-        initPreds();
-        initEncTimes();
     }
 
-    /**
-     * Initializes lastEncouterTime hash
-     */
-    private void initEncTimes() {
-        this.lastEncouterTime = new HashMap<DTNHost, Double>();
-    }
-
-    /**
-     * Initializes predictability hash
-     */
-    private void initPreds()
-    {
-        this.preds = new HashMap<DTNHost, Double>();
-    }
 
     @Override
     public void changedConnection(Connection con) {
         DTNHost otherHost = con.getOtherNode(getHost());
         if (con.isUp()) {
-            updateDeliveryPredFor(otherHost);
-            updateTransitivePreds(otherHost);
-
-            updateContactProperties(otherHost);
-            updateTrasnsitiveContactProperties(otherHost);
+            //Update contact properties
+            updateContactPropertiesOnConnUp(otherHost);
+            updateTransitiveContactProperties(otherHost);
         } else {
+            //Update contact properties
             updateContactPropertiesOnConnDown(otherHost);
+
+            //update storage & energy properties
+            updateStorageAndEnergyPropertiesOnConnDown(otherHost);
+            updateTransitiveStorageAndEnergyProperties(otherHost);
         }
     }
 
-    /**
-     * Updates delivery predictions for a host.
-     * <CODE>P(a,b) = P(a,b)_old + (1 - P(a,b)_old) * PEnc
-     * PEnc(intvl) =
-     * P_encounter_max * (intvl / I_typ) for 0<= intvl <= I_typ
-     * P_encounter_max for intvl > I_typ</CODE>
-     *
-     * @param host The host we just met
-     */
-    private void updateDeliveryPredFor(DTNHost host) {
-        double PEnc;
-        double simTime = SimClock.getTime();
-        double lastEncTime = getEncTimeFor(host);
-        if (lastEncTime == 0)
-            PEnc = PEncMax;
-        else if ((simTime - lastEncTime) < I_TYP) {
-            PEnc = PEncMax * ((simTime - lastEncTime) / I_TYP);
-        } else
-            PEnc = PEncMax;
+    private void updateStorageAndEnergyPropertiesOnConnDown(DTNHost otherHost) {
+        Map<String, StorageAndEnergyProperties> mapFromThisHost = getHost().getStorageAndEnergyPropertiesMap();
+        String nodeName = otherHost.toString();
+        StorageAndEnergyProperties properties = mapFromThisHost.get(nodeName);
 
-        double oldValue = getPredFor(host);
-        double newValue = oldValue + (1 - oldValue) * PEnc;
-        preds.put(host, newValue);
-        lastEncouterTime.put(host, simTime);
-    }
-
-    /**
-     * Returns the timestamp of the last encouter of with the host or -1 if
-     * entry for the host doesn't exist.
-     *
-     * @param host The host to look the timestamp for
-     * @return the last timestamp of encouter with the host
-     */
-    public double getEncTimeFor(DTNHost host) {
-        if (lastEncouterTime.containsKey(host)) {
-            return lastEncouterTime.get(host);
+        if (properties != null) {
+            properties.addNodeProperties(getFreeBufferSize(), SimClock.getTime());
         } else {
-            return 0;
+            properties = new StorageAndEnergyProperties(getBufferSize(), getFreeBufferSize(), SimClock.getTime());
+            mapFromThisHost.put(nodeName, properties);
         }
     }
 
-    /**
-     * Returns the current prediction (P) value for a host or 0 if entry for
-     * the host doesn't exist.
-     *
-     * @param host The host to look the P for
-     * @return the current P value
-     */
-    public double getPredFor(DTNHost host) {
-        ageDeliveryPreds(); // make sure preds are updated before getting
-        if (preds.containsKey(host)) {
-            return preds.get(host);
-        } else {
-            return 0;
-        }
-    }
+    private void updateTransitiveStorageAndEnergyProperties(DTNHost otherHost) {
+        Map<String, StorageAndEnergyProperties> mapFromThisHost = getHost().getStorageAndEnergyPropertiesMap();
+        Map<String, StorageAndEnergyProperties> mapFromOtherHost = otherHost.getStorageAndEnergyPropertiesMap();
 
-    /**
-     * Updates transitive (A->B->C) delivery predictions.
-     * <CODE>P(a,c) = P(a,c)_old + (1 - P(a,c)_old) * P(a,b) * P(b,c) * BETA
-     * </CODE>
-     *
-     * @param host The B host who we just met
-     */
-    private void updateTransitivePreds(DTNHost host) {
-        MessageRouter otherRouter = host.getRouter();
-        assert otherRouter instanceof ProphetV3Router :
-                "PRoPHETv2 only works with other routers of same type";
+        for (Map.Entry<String, StorageAndEnergyProperties> entry : mapFromOtherHost.entrySet()) {
 
-        double pForHost = getPredFor(host); // P(a,b)
-        Map<DTNHost, Double> othersPreds =
-                ((ProphetV3Router) otherRouter).getDeliveryPreds();
+            StorageAndEnergyProperties storageAndEnergyPropertiesFromOtherHost = entry.getValue();
+            StorageAndEnergyProperties storageAndEnergyPropertiesFromThisHost = mapFromThisHost.get(entry.getKey());
 
-        for (Map.Entry<DTNHost, Double> e : othersPreds.entrySet()) {
-            if (e.getKey() == getHost()) {
-                continue; // don't add yourself
+            if (storageAndEnergyPropertiesFromThisHost != null) {
+                TreeMap<Double, NodeProperties> nodePropertiesForThisHost = storageAndEnergyPropertiesFromThisHost.getNodePropertiesMap();
+                TreeMap<Double, NodeProperties> nodePropertiesFromOtherHost = storageAndEnergyPropertiesFromOtherHost.getNodePropertiesMap();
+
+                for (Map.Entry<Double, NodeProperties> entry2 : nodePropertiesFromOtherHost.entrySet()) {
+                    nodePropertiesForThisHost.put(entry2.getKey(), entry2.getValue());
+                }
+
+            } else {
+                mapFromThisHost.put(entry.getKey(), entry.getValue());
             }
 
-//ProphetV2 max(old,new)
-            double pOld = getPredFor(e.getKey()); // P(a,c)_old
-            double pNew = pForHost * e.getValue() * beta;
-            if (pNew > pOld)
-                preds.put(e.getKey(), pNew);
-
         }
     }
 
-    private void updateTrasnsitiveContactProperties(DTNHost otherHost) {
-
+    private void updateTransitiveContactProperties(DTNHost otherHost) {
         Map<String, ContactProperties> mapFromThisHost = getHost().getContactPropertiesMap();
         Map<String, ContactProperties> mapFromOtherHost = otherHost.getContactPropertiesMap();
 
@@ -261,174 +184,46 @@ public class ProphetV3Router extends ActiveRouter {
             }
 
             if (contactPropertiesFromThisHost != null) {
-                if (contactPropertiesFromOtherHost.getLastContactTime() > contactPropertiesFromThisHost.getLastContactTime()) {
-                    mapFromThisHost.put(entry.getKey(), entry.getValue());
+                ContactPeriod lastContactPeriodFromOtherHost = contactPropertiesFromOtherHost.getLastContactPeriod();
+                ContactPeriod lastContactPeriodFromThisHost = contactPropertiesFromThisHost.getLastContactPeriod();
+                if (lastContactPeriodFromOtherHost.getStartTime() < lastContactPeriodFromThisHost.getStartTime()) {
+                    continue;
                 }
-            } else {
-                mapFromThisHost.put(entry.getKey(), entry.getValue());
             }
+
+            mapFromThisHost.put(entry.getKey(), entry.getValue());
+
         }
 
     }
 
-    private void updateContactProperties(DTNHost otherHost) {
+    private void updateContactPropertiesOnConnUp(DTNHost otherHost) {
         Map<String, ContactProperties> mapFromThisHost = getHost().getContactPropertiesMap();
         String composedKey = getComposedKey(getHost().toString(), otherHost.toString());
         ContactProperties contactProperties = mapFromThisHost.get(composedKey);
 
         if (contactProperties != null) {
-            contactProperties.incrementFrequency();
-            contactProperties.setLastContactTime(SimClock.getTime());
+            contactProperties.incrementCounter();
+            contactProperties.addStartTime(SimClock.getTime());
         } else {
-            contactProperties = new ContactProperties(1, 0, SimClock.getTime());
+            contactProperties = new ContactProperties(SimClock.getTime());
             mapFromThisHost.put(composedKey, contactProperties);
         }
-
     }
 
     private void updateContactPropertiesOnConnDown(DTNHost otherHost) {
         String composedKey = getComposedKey(getHost().toString(), otherHost.toString());
-        ContactProperties thisContactProperty = getHost().getContactPropertiesMap().get(composedKey);
-        if (thisContactProperty != null) {
-            thisContactProperty.incrementTotalContactTime(SimClock.getTime() - thisContactProperty.getLastContactTime());
+        ContactProperties contactProperties = getHost().getContactPropertiesMap().get(composedKey);
+        if (contactProperties != null) {
+            contactProperties.addEndTime(SimClock.getTime());
         }
     }
 
-    /**
-     * Ages all entries in the delivery predictions.
-     * <CODE>P(a,b) = P(a,b)_old * (GAMMA ^ k)</CODE>, where k is number of
-     * time units that have elapsed since the last time the metric was aged.
-     *
-     * @see #SECONDS_IN_UNIT_S
-     */
-    private void ageDeliveryPreds() {
-        double timeDiff = (SimClock.getTime() - this.lastAgeUpdate) /
-                secondsInTimeUnit;
-
-        if (timeDiff == 0) {
-            return;
-        }
-
-        double mult = Math.pow(gamma, timeDiff);
-        for (Map.Entry<DTNHost, Double> e : preds.entrySet()) {
-            e.setValue(e.getValue() * mult);
-        }
-
-        this.lastAgeUpdate = SimClock.getTime();
-    }
-
-    /**
-     * Returns a map of this router's delivery predictions
-     *
-     * @return a map of this router's delivery predictions
-     */
-    private Map<DTNHost, Double> getDeliveryPreds() {
-        ageDeliveryPreds(); // make sure the aging is done
-        return this.preds;
-    }
-
-    @Override
-    public void update() {
-        super.update();
-        if (!canStartTransfer() || isTransferring()) {
-            return; // nothing to transfer or is currently transferring
-        }
-
-        // try messages that could be delivered to final recipient
-        if (exchangeDeliverableMessages() != null) {
-            return;
-        }
-
-        tryOtherMessages();
-    }
-
-    /**
-     * Tries to send all other messages to all connected hosts ordered by
-     * their delivery probability
-     *
-     * @return The return value of {@link #tryMessagesForConnected(List)}
-     */
-    private Tuple<Message, Connection> tryOtherMessages() {
-        List<Tuple<Message, Connection>> messages =
-                new ArrayList<Tuple<Message, Connection>>();
-
-        Collection<Message> msgCollection = getMessageCollection();
-
-		/* for all connected hosts collect all messages that have a higher
-		   probability of delivery by the other host */
-        for (Connection con : getConnections()) {
-            DTNHost other = con.getOtherNode(getHost());
-            ProphetV3Router othRouter = (ProphetV3Router) other.getRouter();
-
-            if (othRouter.isTransferring()) {
-                continue; // skip hosts that are transferring
-            }
-
-            for (Message m : msgCollection) {
-                if (othRouter.hasMessage(m.getId())) {
-                    continue; // skip messages that the other one has
-                }
-                if ((othRouter.getPredFor(m.getTo()) >= getPredFor(m.getTo()))) {
-
-                    messages.add(new Tuple<Message, Connection>(m, con));
-                }
-            }
-        }
-
-        if (messages.size() == 0) {
-            return null;
-        }
-
-        // sort the message-connection tuples
-        Collections.sort(messages, new TupleComparator());
-        return tryMessagesForConnected(messages);    // try to send messages
-    }
-
-    /**
-     * Comparator for Message-Connection-Tuples that orders the tuples by
-     * their delivery probability by the host on the other side of the
-     * connection (GRTRMax)
-     */
-    private class TupleComparator implements Comparator
-            <Tuple<Message, Connection>> {
-
-        public int compare(Tuple<Message, Connection> tuple1,
-                           Tuple<Message, Connection> tuple2) {
-            // delivery probability of tuple1's message with tuple1's connection
-            double p1 = ((ProphetV3Router) tuple1.getValue().
-                    getOtherNode(getHost()).getRouter()).getPredFor(
-                    tuple1.getKey().getTo());
-            // -"- tuple2...
-            double p2 = ((ProphetV3Router) tuple2.getValue().
-                    getOtherNode(getHost()).getRouter()).getPredFor(
-                    tuple2.getKey().getTo());
-
-            // bigger probability should come first
-            if (p2 - p1 == 0) {
-                /* equal probabilities -> let queue mode decide */
-                return compareByQueueMode(tuple1.getKey(), tuple2.getKey());
-            } else if (p2 - p1 < 0) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-    }
 
     @Override
     public RoutingInfo getRoutingInfo() {
-        ageDeliveryPreds();
         RoutingInfo top = super.getRoutingInfo();
-        RoutingInfo ri = new RoutingInfo(preds.size() +
-                " delivery prediction(s) and resource properties");
-
-        for (Map.Entry<DTNHost, Double> e : preds.entrySet()) {
-            DTNHost host = e.getKey();
-            Double value = e.getValue();
-
-            ri.addMoreInfo(new RoutingInfo(String.format("%s : %.6f",
-                    host, value)));
-        }
+        RoutingInfo ri = new RoutingInfo("Resource properties");
 
         for (Map.Entry<String, ContactProperties> cp : getHost().getContactPropertiesMap().entrySet()) {
             String contactID = cp.getKey();
@@ -464,3 +259,4 @@ public class ProphetV3Router extends ActiveRouter {
         }
     }
 }
+
