@@ -3,13 +3,13 @@
 #
 
 ## Scenario settings
-#Scenario.name = default_scenario
-Scenario.name = freiburg1True_router:%%Group.router%%_bSize:%%Group.bufferSize%%_Ttl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_endTime:%%Scenario.endTime%%_warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%_updateInt:%%Scenario.updateInterval%%_beta:%%ProphetV2Router.beta%%_gamma:%%ProphetV2Router.gamma%%
+Scenario.name = default_scenario
+#Scenario.name = freiburg1True_router:%%Group.router%%_bSize:%%Group.bufferSize%%_Ttl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_endTime:%%Scenario.endTime%%_warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%_updateInt:%%Scenario.updateInterval%%_beta:%%ProphetV2Router.beta%%_gamma:%%ProphetV2Router.gamma%%
 
 Scenario.simulateConnections = true
 Scenario.updateInterval = 0.1
 # 43200s == 12h
-Scenario.endTime = 604800
+Scenario.endTime = 28800
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
@@ -22,7 +22,7 @@ Scenario.endTime = 604800
 btInterface.type = SimpleBroadcastInterface
 # Transmit speed of 2 Mbps = 250kBps
 btInterface.transmitSpeed = 100M
-btInterface.transmitRange = 20
+btInterface.transmitRange = 80
 
 # High speed, long range, interface for group 4
 highspeedInterface.type = SimpleBroadcastInterface
@@ -53,7 +53,7 @@ highspeedInterface.transmitRange = 200
 
 
 #Group.router = [EpidemicRouter;ProphetV2Router;MaxPropRouter;SprayAndWaitRouter]
-Group.router = ProphetV2Router
+Group.router = ProphetV3Router
 Group.bufferSize = 1000G
 Group.waitTime = 10,15
 # All nodes have the bluetooth interface
@@ -74,9 +74,9 @@ Events.nrof = 1
 Events1.class = MessageEventGenerator
 # (following settings are specific for the MessageEventGenerator class)
 # Creation interval in seconds (one new message every 25 to 35 seconds)
-Events1.interval = 60
+Events1.interval = 3
 # Message sizes (500kB - 100MB)
-Events1.size = 100k,100M
+Events1.size = 1M
 # range of message source/destination addresses
 Events1.hosts = 0,126
 # Message ID prefix
@@ -96,14 +96,17 @@ MovementModel.warmup = 0
 ## Reports - all report names have to be valid report classes
 
 # how many reports to load
-Report.nrofReports = 1
+Report.nrofReports = 3
 # length of the warm up period (simulated seconds)
 Report.warmup = 0
 # default directory of reports (can be overridden per Report with output setting)
 Report.reportDir = reports/
 # Report classes to load
-Report.report1 = MessageStatsReport
-Report.report2 = ContactTimesReport
+Report.report1 = ConnectivityONEReport
+Report.report2 = TotalContactTimeReport
+Report.report3 = MessageStatsReport
+
+
 
 ## Default settings for some routers settings
 ProphetRouter.secondsInTimeUnit = 30
@@ -113,6 +116,8 @@ ProphetV2Router.beta = 0.9
 ProphetV2Router.gamma = 0.999885791
 SprayAndWaitRouter.nrofCopies = 6
 SprayAndWaitRouter.binaryMode = true
+
+
 
 ## Optimization settings -- these affect the speed of the simulation
 ## see World class for details.
