@@ -1,8 +1,11 @@
 package routing;
 
 public class ContactPeriod {
-    private double startTime;
-    private double endTime;
+
+    public static final long SIZE_OF = 16;
+
+    private double startTime;//8 bytes
+    private double endTime;//8 bytes
 
     public ContactPeriod(double startTime) {
         this.startTime = startTime;

@@ -2,10 +2,12 @@ package routing;
 
 import java.util.*;
 
-public class StorageAndEnergyProperties {
+public class    StorageAndEnergyProperties {
 
-    private double bufferSize;
-//    private double batteryCapacity;
+    public static final long SIZE_OF = 16;
+
+    private double bufferSize;  //8 bytes
+    private double batteryCapacity; //8 bytes
     private final TreeMap<Double , NodeProperties> nodePropertiesMap = new TreeMap<>();
 
 

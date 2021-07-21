@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="InstrumentationAgent">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/InstrumentationAgent.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

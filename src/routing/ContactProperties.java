@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContactProperties {
-    private double totalContactTime;
-    private double initialContactTime;
-    private int counter;
+
+    public static final long SIZE_OF = 20;
+
+    private double totalContactTime;  //8 bytes
+    private double initialContactTime; //8 bytes
+    private int counter; // 4 bytes
     private final List<ContactPeriod> contactTimeHistory = new ArrayList<>();
 
 
@@ -76,4 +79,8 @@ public class ContactProperties {
     }
 
 
+    public void addContactPeriod(ContactPeriod cp) {
+        contactTimeHistory.add(cp);
+        incrementCounter();
+    }
 }

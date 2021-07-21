@@ -279,6 +279,10 @@ public class DTNHost implements Comparable<DTNHost> {
 		return this.router.getRoutingInfo();
 	}
 
+	public void printOverHead() {
+		this.router.printOverHead();
+	}
+
 	/**
 	 * Returns the interface objects of the node
 	 */

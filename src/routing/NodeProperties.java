@@ -1,8 +1,11 @@
 package routing;
 
 public class NodeProperties {
-    private double freeBufferSize;
-//    private double availableBattery;
+
+    public static final long SIZE_OF = 16;
+
+    private double freeBufferSize;  //8 bytes
+//    private double availableBattery;  //8 bytes
 
     public NodeProperties(double freeBufferSize) {
         this.freeBufferSize = freeBufferSize;

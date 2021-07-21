@@ -196,6 +196,11 @@ public class NodeChooser extends JPanel implements ActionListener {
 	 * Action listener method for buttons and node set chooser
 	 */
 	public void actionPerformed(ActionEvent e) {
+		for (DTNHost host : allNodes) {
+			host.printOverHead();
+
+		}
+
 		if (e.getSource() instanceof JButton) {
 			JButton source = (JButton)e.getSource();
 			DTNHost host = (DTNHost)source.getClientProperty(HOST_KEY);
